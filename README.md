@@ -1,6 +1,6 @@
 # Ideal Postcodes Laravel Package
 
-Set your Ideal Postcodes API key in `.env`, then inject the [PHP SDK](https://packagist.org/packages/ideal-postcodes/sdk) client or any of its resources into a controller, or call the facade. Laravel 12 or 13, PHP 8.2 or later.
+Set your Ideal Postcodes API key in `.env`, then inject the [PHP SDK](https://packagist.org/packages/ideal-postcodes/sdk) client into a controller, or call the facade. Laravel 12 or 13, PHP 8.2 or later.
 
 ```bash
 composer require ideal-postcodes/laravel
@@ -15,15 +15,15 @@ IDPC_MANAGEMENT_KEY=uk_... # only for key, licensee and config operations
 ```
 
 ```php
-use IdealPostcodes\Resources\Postcodes;
+use IdealPostcodes\Client;
 
 final class CheckoutController
 {
-    public function __construct(private readonly Postcodes $postcodes) {}
+    public function __construct(private readonly Client $client) {}
 
     public function addresses(string $postcode): array
     {
-        return $this->postcodes->lookup($postcode)->addresses;
+        return $this->client->lookup($postcode)->addresses;
     }
 }
 ```
@@ -31,10 +31,10 @@ final class CheckoutController
 ```php
 use IdealPostcodes\Laravel\Facades\IdealPostcodes;
 
-$lookup = IdealPostcodes::postcodes()->lookup('SW1A 2AA');
+$lookup = IdealPostcodes::lookup('BR8 7RE');
 ```
 
-Inject `IdealPostcodes\Client` for the whole API, or one resource: `Postcodes`, `Addresses`, `Autocomplete`, `Places`, `Emails`, `PhoneNumbers`, `Keys`, `Licensees` or `Configs`, all under `IdealPostcodes\Resources`.
+Inject `IdealPostcodes\Client`, or `IdealPostcodes\Contracts\ClientContract` to swap in a test double. Each API operation is one method on the client and the facade, such as `IdealPostcodes::addressCleanse($body)`.
 
 Requests go through the Guzzle that Laravel ships, found by `php-http/discovery`, or through `Psr\Http\Client\ClientInterface` when your application binds one. Publish the config file to change the base URI, the HTTP client binding or the headers sent with every request:
 

@@ -6,15 +6,6 @@ namespace IdealPostcodes\Laravel;
 
 use IdealPostcodes\Client;
 use IdealPostcodes\Contracts\ClientContract;
-use IdealPostcodes\Resources\Addresses;
-use IdealPostcodes\Resources\Autocomplete;
-use IdealPostcodes\Resources\Configs;
-use IdealPostcodes\Resources\Emails;
-use IdealPostcodes\Resources\Keys;
-use IdealPostcodes\Resources\Licensees;
-use IdealPostcodes\Resources\PhoneNumbers;
-use IdealPostcodes\Resources\Places;
-use IdealPostcodes\Resources\Postcodes;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\ServiceProvider;
@@ -25,7 +16,7 @@ use Psr\Http\Message\StreamFactoryInterface;
 
 /**
  * Binds an `IdealPostcodes\Client` built from `config/ideal-postcodes.php`,
- * plus one binding per resource, so any of them can be constructor-injected.
+ * so it can be constructor-injected as `Client` or `ClientContract`.
  * Package discovery registers the provider and the `IdealPostcodes` facade.
  */
 final class IdealPostcodesServiceProvider extends ServiceProvider
@@ -37,21 +28,6 @@ final class IdealPostcodesServiceProvider extends ServiceProvider
      */
     public const CONFIG_TAG = 'ideal-postcodes-config';
 
-    /**
-     * Resource bindings, by the `Client` method that builds each one.
-     */
-    public const RESOURCES = [
-        'postcodes' => Postcodes::class,
-        'addresses' => Addresses::class,
-        'autocomplete' => Autocomplete::class,
-        'places' => Places::class,
-        'emails' => Emails::class,
-        'phoneNumbers' => PhoneNumbers::class,
-        'keys' => Keys::class,
-        'licensees' => Licensees::class,
-        'configs' => Configs::class,
-    ];
-
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../config/ideal-postcodes.php', self::CONFIG);
@@ -59,12 +35,6 @@ final class IdealPostcodesServiceProvider extends ServiceProvider
         $this->app->singleton(Client::class, fn (Container $app): Client => self::clientFor($app));
         $this->app->alias(Client::class, ClientContract::class);
         $this->app->alias(Client::class, self::CONFIG);
-
-        // No return type on purpose: Laravel 12's container stubs type the
-        // dynamic call as mixed, Laravel 13's as the resource union.
-        foreach (self::RESOURCES as $method => $class) {
-            $this->app->singleton($class, fn (Container $app) => $app->make(Client::class)->{$method}());
-        }
     }
 
     public function boot(): void
